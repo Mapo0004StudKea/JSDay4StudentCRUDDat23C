@@ -73,14 +73,15 @@
 </html>
 
 <script>
-  let nextId = 200;
-  let students = [
-    {id: 100, name: "Madeleine Flynn", bornDate: "2012-03-12", bornTime: "12:01"},
-    {id: 101, name: "Cecile Benson", bornDate: "2011-09-21", bornTime: "15:01"}
-  ]
+ // let nextId = 200;
+ // let students = [
+ //   {id: 100, name: "Madeleine Flynn", bornDate: "2012-03-12", bornTime: "12:01"},
+ //   {id: 101, name: "Cecile Benson", bornDate: "2011-09-21", bornTime: "15:01"}
+ // ]
 
-  const URLstudents = "http://localhost:3333/students"; //For when we meet in the class - remember to set server.port = 3333
-  const URLstudent  = "http://localhost:3333/student"; //For when we meet in the class
+  let students = []
+  const URLstudents = "http://localhost:8080/students"; //For when we meet in the class - remember to set server.port = 3333
+  const URLstudent  = "http://localhost:8080/student"; //For when we meet in the class
 
   function setUpHandlers() {
     document.getElementById("student-table-body").onclick = handleTableClick
@@ -99,6 +100,15 @@
       const idToDelete = Number(target.dataset.idDelete)
 
       //apiStudentDelete(idToDelete)
+      //hhtp://localhost8080/student/{id}
+      const options = makeOptions("DELETE");
+      fetch(`${URLstudent}/${idToDelete}`, options)
+              .then(res => {
+                if (!res.ok) {
+                  console.error(res.headers);
+                }
+              })
+              .catch(err => console.error(err.message))
 
       //student = students.filter(u => (u.id == idToDelete) ? false : true)
       students = students.filter(s => s.id !== idToDelete)
@@ -154,6 +164,18 @@
     if (student.id){ //Edit
       //apiStudentPut(student)
 
+      const options = makeOptions("PUT", student);
+      try {
+        student = await fetch(`${URLstudent}/${student.id}`, options)
+                .then(handleHttpErrors)
+      }
+      catch (err) {
+        if (err.apiError) {
+          console.error("Full API error: ", err.apiError);
+        } else {
+          console.error(err.message);
+        }
+      }
       /*students = students.map(u =>
           if(u.id===student.id){
               return student
@@ -164,8 +186,19 @@
       students = students.map(s => (s.id === student.id) ? student : s)
     } else {
       //apiStudentPost(student)
-
-      student.id = nextId++ //remove when calling api as db decided id
+      const options = makeOptions("POST", student)
+      try {
+        student = await fetch(URLstudent, options)
+                .then(handleHttpErrors)
+      }
+      catch (err) {
+        if (err.apiError) {
+          console.error("Full API error: ", err.apiError);
+        } else {
+          console.error(err.message)
+        }
+      }
+      //student.id = nextId++ //remove when calling api as db decided id
       students.push(student)
     }
 
@@ -175,6 +208,18 @@
   async function fetchStudents() {
 
     // Todo  --> This is one of the things we will do in the class
+    try {
+      students = await fetch(URLstudents)
+              .then(handleHttpErrors)
+    }
+    catch (err) {
+      if (err.apiError) {
+        console.error("Full API error: ", err.apiError);
+      }
+      else {
+        console.error(err.message);
+      }
+    }
 
     makeRows()
   }
